@@ -22,22 +22,24 @@ def drop_table_with_dependencies(db_config, table_name):
             drop_table_recursive(dep_table, visited)
 
         # Drop foreign key constraints to break circular dependencies
-        cursor.execute(f"""
-            SELECT constraint_name
-            FROM information_schema.table_constraints
-            WHERE table_name = '{table_name}' AND constraint_type = 'FOREIGN KEY';
-        """)
-        constraints = cursor.fetchall()
-        for (constraint,) in constraints:
-            print(f"Dropping foreign key constraint {constraint} from table {table_name}")
-            cursor.execute(f"ALTER TABLE {table_name} DROP FOREIGN KEY {constraint};")
+        # cursor.execute(f"""
+        #     SELECT constraint_name
+        #     FROM information_schema.table_constraints
+        #     WHERE table_name = '{table_name}' AND constraint_type = 'FOREIGN KEY';
+        # """)
+        # constraints = cursor.fetchall()
+        # for (constraint,) in constraints:
+        #     print(f"Dropping foreign key constraint {constraint} from table {table_name}")
+        #     cursor.execute(f"ALTER TABLE {table_name} DROP FOREIGN KEY {constraint};")
 
         # Drop the current table
         print(f"Dropping table {table_name}")
         cursor.execute(f"DROP TABLE {table_name};")
 
+    cursor.execute('SET FOREIGN_KEY_CHECKS = 0;')
     # Start the recursive drop process
     drop_table_recursive(table_name, set())
+    cursor.execute('SET FOREIGN_KEY_CHECKS = 1;')
 
     conn.commit()
     cursor.close()
@@ -50,4 +52,4 @@ db_config = {
     'host': 'your_host',
     'database': 'your_database'
 }
-drop_table_with_dependencies(db_config, 'your_table_name')
+drop_table_with_dependencies(db_config, input('your_table_name? '))
