@@ -1,6 +1,6 @@
 import mysql.connector
 
-def drop_table_with_dependencies(db_config, table_name):
+def drop_table_with_dependencies(db_config, table_name, execute):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
 
@@ -13,7 +13,8 @@ def drop_table_with_dependencies(db_config, table_name):
         cursor.execute(f"""
             SELECT table_name, constraint_name
             FROM information_schema.key_column_usage
-            WHERE referenced_table_name = '{table_name}';
+            WHERE referenced_table_name = '{table_name}' AND
+            referenced_table_schema = '{db_config['database']}';
         """)
         dependencies = cursor.fetchall()
 
@@ -33,8 +34,10 @@ def drop_table_with_dependencies(db_config, table_name):
         #     cursor.execute(f"ALTER TABLE {table_name} DROP FOREIGN KEY {constraint};")
 
         # Drop the current table
-        print(f"Dropping table {table_name}")
-        cursor.execute(f"DROP TABLE {table_name};")
+        sql = f"DROP TABLE {table_name};"
+        print(sql)
+        if (execute == 'yes'):
+            cursor.execute(sql)
 
     cursor.execute('SET FOREIGN_KEY_CHECKS = 0;')
     # Start the recursive drop process
@@ -52,4 +55,4 @@ db_config = {
     'host': 'your_host',
     'database': 'your_database'
 }
-drop_table_with_dependencies(db_config, input('your_table_name? '))
+drop_table_with_dependencies(db_config, input('your_table_name? '), input('Execute on DB (yes/no)? '))
