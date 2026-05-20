@@ -49,10 +49,28 @@ def drop_table_with_dependencies(db_config, table_name, execute):
     conn.close()
 
 # Example usage
+import getpass
+
 db_config = {
-    'user': 'your_username',
-    'password': 'your_password',
-    'host': 'your_host',
-    'database': 'your_database'
+    'user': input('DB username: '),
+    'password': getpass.getpass('DB password: '),
+    'host': input('DB host: '),
+    'database': input('DB name: ')
 }
-drop_table_with_dependencies(db_config, input('your_table_name? '), input('Execute on DB (yes/no)? '))
+while True:
+    table = input('Table name (or "quit" to exit): ')
+    if table.lower() == 'quit':
+        break
+    try:
+        print('--- Dry run ---')
+        drop_table_with_dependencies(db_config, table, 'no')
+        print('--- End dry run ---')
+    except Exception as e:
+        print(f'Error: {e}')
+        continue
+    execute = input('Execute on DB (yes/no)? ')
+    if execute.lower() == 'yes':
+        try:
+            drop_table_with_dependencies(db_config, table, execute)
+        except Exception as e:
+            print(f'Error: {e}')
